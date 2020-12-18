@@ -14,6 +14,25 @@
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
 	};
+
+	aliases {
+		led-blue = &led_blue;
+		led-red = &led_red;
+		led0 = &led_blue;
+		led1 = &led_red;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led_blue: blue {
+			gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+			label = "Blue LED";
+		};
+		led_red: red {
+			gpios = <&gpio0 17 GPIO_ACTIVE_LOW>;
+			label = "Red LED";
+		};
+	};
 };
 
 &gpiote {
