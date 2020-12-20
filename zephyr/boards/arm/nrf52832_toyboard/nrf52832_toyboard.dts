@@ -33,6 +33,17 @@
 			label = "Red LED";
 		};
 	};
+
+	vbatt {
+		compatible = "voltage-divider";
+		io-channels = <&adc 3>;
+		output-ohms = <220000>;
+		full-ohms = <(470000 + 220000)>;
+	};
+};
+
+&adc {
+	status = "okay";
 };
 
 &gpiote {

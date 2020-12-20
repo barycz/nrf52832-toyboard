@@ -1,8 +1,11 @@
 
+#include "battery.h"
+
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
+#include <bluetooth/services/bas.h>
 
 #include <zephyr/types.h>
 #include <zephyr.h>
@@ -73,6 +76,8 @@ BT_GATT_SERVICE_DEFINE(vnd_svc,
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+	BT_DATA_BYTES(BT_DATA_UUID16_ALL,
+		BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
 	BT_DATA(BT_DATA_UUID128_ALL, vnd_uuid.val, sizeof(vnd_uuid.val)),
 };
 
@@ -139,6 +144,8 @@ void main(void)
 	}
 
 	while(1) {
+		bt_bas_set_battery_level(battery_get_level());
+
 		gpio_pin_set(led_blue_dev, LED_BLUE_PIN, 1);
 		k_sleep(K_MSEC(100));
 		gpio_pin_set(led_blue_dev, LED_BLUE_PIN, 0);
