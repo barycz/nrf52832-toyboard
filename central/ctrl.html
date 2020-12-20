@@ -2,14 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>ctrl</title>
+		<title>ctrl</title>
+		<script src="peripheral.js"></script>
     <script src="ctrl.js"></script>
   </head>
   <body>
-		<button onclick="onConnectClick()">connect</button>
-		<button onclick="onReadClick()">read</button>
-		<button onclick="onSetClick()">on</button>
-		<button onclick="onResetClick()">off</button>
-		<button onclick="onBlinkClick()">blink</button>
+		<button onclick="ctrl.addPeripheral()">connect</button>
+		<button onclick="ctrl.turnOn()">on</button>
+		<button onclick="ctrl.turnOff()">off</button>
+		<button onclick="ctrl.startBlinking()">blink</button>
   </body>
 </html>
