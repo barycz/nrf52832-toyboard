@@ -4,8 +4,8 @@ log = console.log;
 ctrl = {};
 
 async function onConnectClick() {
-	let serviceUuid = "12345678-1234-5678-1234-56789abcdef0";
-	let characteristicUuid = "13345678-1234-5678-1334-56789abcdef3";
+	let serviceUuid = "00000001-201b-286a-f29d-ff952dc319a2";
+	let characteristicUuid = "00000002-201b-286a-f29d-ff952dc319a2";
 
 	try {
 		log('Requesting Bluetooth Device...');
@@ -32,29 +32,45 @@ async function onReadClick() {
 		log('Getting Characteristics value...');
 		let characteristicValue = await ctrl.characteristic.readValue();
 
-		log('Characteristic: ' + characteristicValue.byteLength + ' bytes: ' + characteristicValue.getInt32());
+		log('Characteristic: ' + characteristicValue.byteLength + ' bytes: ' + characteristicValue.getUint8());
+	} catch(error) {
+		log('exception ' + error);
+	}
+}
+
+async function writeDriverState(s) {
+	try {
+		log('Writing ' + s);
+		let b = new Uint8Array(1);
+		b[0] = s;
+		await ctrl.characteristic.writeValueWithResponse(b);
 	} catch(error) {
 		log('exception ' + error);
 	}
 }
 
 async function onSetClick() {
-	try {
-		log('Writing one ...');
-		let b = new Int32Array(1);
-		b[0] = 0x12345678;
-		await ctrl.characteristic.writeValueWithResponse(b);
-	} catch(error) {
-		log('exception ' + error);
-	}
+	await writeDriverState(5);
 }
 
 async function onResetClick() {
+	await writeDriverState(0);
+}
+
+async function blinkUpdate() {
+	let states = [1, 5, 4, 0, 1, 5, 4, 0, 5, 0, 5, 0];
+	await writeDriverState(states[ctrl.blinkState]);
+	if (++ctrl.blinkState >= states.length) {
+		ctrl.blinkState = 0;
+	}
+	setTimeout(blinkUpdate, 100);
+}
+
+function onBlinkClick() {
 	try {
-		log('Writing zero ...');
-		let b = new Int32Array(1);
-		b[0] = 0;
-		await ctrl.characteristic.writeValueWithResponse(b);
+		log('Start blinking ...');
+		ctrl.blinkState = 0;
+		setTimeout(blinkUpdate);
 	} catch(error) {
 		log('exception ' + error);
 	}
