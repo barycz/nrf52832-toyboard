@@ -1,5 +1,6 @@
 
 #include "battery.h"
+#include "motor_driver.h"
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -22,9 +23,7 @@
 
 static const struct device *led_blue_dev;
 static const struct device *led_red_dev;
-
-#define DRIVER_OUTPUT_FIRST_BIT 12
-#define DRIVER_OUTPUT_MASK 0x0f
+static struct motor_driver motor_driver;
 
 // 00000001-201b-286a-f29d-ff952dc319a2
 static struct bt_uuid_128 vnd_uuid = BT_UUID_INIT_128(
@@ -53,9 +52,7 @@ static ssize_t write_driver_value(struct bt_conn *conn, const struct bt_gatt_att
 
 	memcpy(value + offset, buf, len);
 
-	gpio_port_set_masked(led_blue_dev,
-		DRIVER_OUTPUT_MASK << DRIVER_OUTPUT_FIRST_BIT,
-		driver_value << DRIVER_OUTPUT_FIRST_BIT);
+	motor_driver_set_mode(&motor_driver, (enum motor_driver_mode)driver_value);
 
 	return len;
 }
@@ -127,12 +124,11 @@ void main(void)
 
 	err = gpio_pin_configure(led_blue_dev, LED_BLUE_PIN, GPIO_OUTPUT_INACTIVE | LED_BLUE_FLAGS);
 	err = gpio_pin_configure(led_red_dev, LED_RED_PIN, GPIO_OUTPUT_INACTIVE | LED_RED_FLAGS);
+	if (err < 0) {
+		return;
+	}
 
-	err = gpio_pin_configure(led_blue_dev, DRIVER_OUTPUT_FIRST_BIT, GPIO_OUTPUT_ACTIVE); // DRVAIN1
-	err = gpio_pin_configure(led_blue_dev, DRIVER_OUTPUT_FIRST_BIT + 1, GPIO_OUTPUT_INACTIVE); // DRVAIN2
-	err = gpio_pin_configure(led_blue_dev, DRIVER_OUTPUT_FIRST_BIT + 2, GPIO_OUTPUT_ACTIVE); // DRVBIN1
-	err = gpio_pin_configure(led_blue_dev, DRIVER_OUTPUT_FIRST_BIT + 3, GPIO_OUTPUT_INACTIVE); // DRVBIN2
-	err = gpio_pin_configure(led_blue_dev, 11, GPIO_OUTPUT_ACTIVE); // NDRVSLEEP
+	err = motor_driver_init(&motor_driver, LED_BLUE); // TODO right device
 	if (err < 0) {
 		return;
 	}
@@ -144,11 +140,17 @@ void main(void)
 	}
 
 	while(1) {
-		bt_bas_set_battery_level(battery_get_level());
+		uint8_t batt_level = battery_get_level();
+		bt_bas_set_battery_level(batt_level);
+		gpio_pin_t pin = LED_BLUE_PIN;
+		if (batt_level < 10) {
+			pin = LED_RED_PIN;
+			motor_driver_set_mode(&motor_driver, motor_driver_off);
+		}
 
-		gpio_pin_set(led_blue_dev, LED_BLUE_PIN, 1);
+		gpio_pin_set(led_blue_dev, pin, 1);
 		k_sleep(K_MSEC(100));
-		gpio_pin_set(led_blue_dev, LED_BLUE_PIN, 0);
+		gpio_pin_set(led_blue_dev, pin, 0);
 		k_sleep(K_MSEC(1900));
 	}
 }
