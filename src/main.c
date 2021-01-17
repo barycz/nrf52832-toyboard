@@ -78,6 +78,10 @@ static const struct bt_data ad[] = {
 	BT_DATA(BT_DATA_UUID128_ALL, vnd_uuid.val, sizeof(vnd_uuid.val)),
 };
 
+#define ADV_PARAMS BT_LE_ADV_PARAM( \
+	BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME, \
+	BT_GAP_ADV_SLOW_INT_MIN, BT_GAP_ADV_SLOW_INT_MAX, NULL)
+
 static void bt_ready(int err)
 {
 	if (err) {
@@ -87,7 +91,7 @@ static void bt_ready(int err)
 
 	printk("Bluetooth initialized\n");
 
-	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
+	err = bt_le_adv_start(ADV_PARAMS, ad, ARRAY_SIZE(ad), NULL, 0);
 	if (err) {
 		printk("Advertising failed to start (err %d)\n", err);
 		return;
