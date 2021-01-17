@@ -23,7 +23,8 @@
 
 static const struct device *led_blue_dev;
 static const struct device *led_red_dev;
-static struct motor_driver motor_driver;
+static struct motor_driver motor_a;
+static struct motor_driver motor_b;
 
 // 00000001-201b-286a-f29d-ff952dc319a2
 static struct bt_uuid_128 vnd_uuid = BT_UUID_INIT_128(
@@ -31,7 +32,18 @@ static struct bt_uuid_128 vnd_uuid = BT_UUID_INIT_128(
 	0x6a, 0x28, 0x1b, 0x20, 0x01, 0x00, 0x00, 0x00
 );
 
-static uint8_t driver_value;
+struct motor_driver_bt_data
+{
+	enum motor_driver_mode mode;
+	motor_driver_duty duty;
+};
+
+struct motor_drivers_characteristic
+{
+	struct motor_driver_bt_data data[2];
+};
+
+static struct motor_drivers_characteristic driver_value;
 
 static ssize_t read_driver_value(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	void *buf, uint16_t len, uint16_t offset)
@@ -52,20 +64,21 @@ static ssize_t write_driver_value(struct bt_conn *conn, const struct bt_gatt_att
 
 	memcpy(value + offset, buf, len);
 
-	motor_driver_set_mode(&motor_driver, (enum motor_driver_mode)driver_value);
+	motor_driver_set(&motor_a, driver_value.data[0].mode, driver_value.data[0].duty);
+	motor_driver_set(&motor_b, driver_value.data[1].mode, driver_value.data[1].duty);
 
 	return len;
 }
 
 // 00000002-201b-286a-f29d-ff952dc319a2
-static const struct bt_uuid_128 vnd_signed_uuid = BT_UUID_INIT_128(
+static const struct bt_uuid_128 vnd_drivers_uuid = BT_UUID_INIT_128(
 	0xa2, 0x19, 0xc3, 0x2d, 0x95, 0xff, 0x9d, 0xf2,
 	0x6a, 0x28, 0x1b, 0x20, 0x02, 0x00, 0x00, 0x00
 );
 
 BT_GATT_SERVICE_DEFINE(vnd_svc,
 	BT_GATT_PRIMARY_SERVICE(&vnd_uuid),
-	BT_GATT_CHARACTERISTIC(&vnd_signed_uuid.uuid,
+	BT_GATT_CHARACTERISTIC(&vnd_drivers_uuid.uuid,
 		BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
 		BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 		read_driver_value, write_driver_value, &driver_value),
@@ -110,11 +123,19 @@ static void bt_ready(int err)
 #define LED_RED_PIN DT_GPIO_PIN(LED_RED_NODE, gpios)
 #define LED_RED_FLAGS DT_GPIO_FLAGS(LED_RED_NODE, gpios)
 
+#define PWM0_NODE DT_NODELABEL(pwm0)
+#define PWM0 DT_LABEL(PWM0_NODE)
+#define MOTOR_PIN_NSLEEP 11
+#define MOTOR_PIN_A1 12
+#define MOTOR_PIN_A2 13
+#define MOTOR_PIN_B1 14
+#define MOTOR_PIN_B2 15
+
 void main(void)
 {
 	int err;
 
-	printk("Starting Beacon Demo\n");
+	printk("Starting toyboard\n");
 
 	led_blue_dev = device_get_binding(LED_BLUE);
 	if (led_blue_dev == NULL) {
@@ -132,7 +153,12 @@ void main(void)
 		return;
 	}
 
-	err = motor_driver_init(&motor_driver, LED_BLUE); // TODO right device
+	err = motor_driver_init(&motor_a, PWM0, MOTOR_PIN_A1, MOTOR_PIN_A2, LED_BLUE, MOTOR_PIN_NSLEEP); // TODO right device
+	if (err < 0) {
+		return;
+	}
+
+	err = motor_driver_init(&motor_b, PWM0, MOTOR_PIN_B1, MOTOR_PIN_B2, LED_BLUE, MOTOR_PIN_NSLEEP); // TODO right device
 	if (err < 0) {
 		return;
 	}
@@ -149,12 +175,13 @@ void main(void)
 		gpio_pin_t pin = LED_BLUE_PIN;
 		if (batt_level < 10) {
 			pin = LED_RED_PIN;
-			motor_driver_set_mode(&motor_driver, motor_driver_off);
+			motor_driver_set(&motor_a, motor_driver_off, 0);
+			motor_driver_set(&motor_b, motor_driver_off, 0);
 		}
 
 		gpio_pin_set(led_blue_dev, pin, 1);
 		k_sleep(K_MSEC(100));
 		gpio_pin_set(led_blue_dev, pin, 0);
-		k_sleep(K_MSEC(1900));
+		k_sleep(K_MSEC(2900));
 	}
 }

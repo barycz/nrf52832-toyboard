@@ -61,11 +61,14 @@ class Peripheral {
 		}
 	}
 
-	async writeDriverState(s) {
+	async writeDriverState(mode, duty) {
 		try {
-			log('Writing ' + s);
-			let b = new Uint8Array(1);
-			b[0] = s;
+			let b = new Uint8Array(4);
+			b[0] = mode;
+			b[1] = duty;
+			b[2] = mode;
+			b[3] = duty;
+			log('Writing ' + b);
 			await this.driverModeChr.writeValueWithResponse(b);
 		} catch(error) {
 			log('exception ' + error);
@@ -73,11 +76,11 @@ class Peripheral {
 	}
 
 	async turnOn() {
-		await this.writeDriverState(5);
+		await this.writeDriverState(3, 255);
 	}
 
 	async turnOff() {
-		await this.writeDriverState(0);
+		await this.writeDriverState(1, 0);
 	}
 
 	async blinkUpdate() {
