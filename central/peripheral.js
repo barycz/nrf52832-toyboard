@@ -5,6 +5,13 @@ class Peripheral {
 	static driverServiceUuid = '00000001-201b-286a-f29d-ff952dc319a2';
 	static battServiceName = 'battery_service';
 
+	constructor() {
+		this.motorDrivers = [
+			new MotorDriver(MotorDriver.Modes.coast, 0),
+			new MotorDriver(MotorDriver.Modes.coast, 0),
+		];
+	}
+
 	async connect() {
 		try {
 			log('Requesting Bluetooth Device...');
@@ -50,24 +57,15 @@ class Peripheral {
 		});
 	}
 
-	async onReadClick() {
+	async writeDriverState() {
 		try {
-			log('Getting Characteristics value...');
-			let characteristicValue = await this.driverModeChr.readValue();
-
-			log('Characteristic: ' + characteristicValue.byteLength + ' bytes: ' + characteristicValue.getUint8());
-		} catch(error) {
-			log('exception ' + error);
-		}
-	}
-
-	async writeDriverState(mode, duty) {
-		try {
-			let b = new Uint8Array(4);
-			b[0] = mode;
-			b[1] = duty;
-			b[2] = mode;
-			b[3] = duty;
+			let b = this.motorDrivers.reduce((accum, driver) => {
+				let driverData = driver.characteristicData;
+				let ret = new Uint8Array(accum.length + driverData.length);
+				ret.set(accum);
+				ret.set(driverData, accum.length);
+				return ret;
+			}, new Uint8Array());
 			log('Writing ' + b);
 			await this.driverModeChr.writeValueWithResponse(b);
 		} catch(error) {
@@ -75,32 +73,17 @@ class Peripheral {
 		}
 	}
 
-	async turnOn() {
-		await this.writeDriverState(3, 255);
+	async updateMotorDriver(id, fn) {
+		fn(this.motorDrivers[id]);
+		await this.writeDriverState();
 	}
 
 	async turnOff() {
-		await this.writeDriverState(1, 0);
-	}
+		this.motorDrivers.forEach(driver => {
+			driver.mode = MotorDriver.Modes.off;
+			driver.duty = 0;
+		});
 
-	async blinkUpdate() {
-		let states = [1, 5, 4, 0, 1, 5, 4, 0, 5, 0, 5, 0];
-		await this.writeDriverState(states[this.blinkState]);
-		if (++this.blinkState >= states.length) {
-			this.blinkState = 0;
-		}
-		let _this = this;
-		setTimeout(function() { _this.blinkUpdate(); }, 100);
-	}
-
-	startBlinking() {
-		try {
-			log('Start blinking ...');
-			this.blinkState = 0;
-			let _this = this;
-			setTimeout(function() { _this.blinkUpdate(); });
-		} catch(error) {
-			log('exception ' + error);
-		}
+		await this.writeDriverState();
 	}
 }
