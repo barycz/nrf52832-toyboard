@@ -9,7 +9,7 @@ int motor_driver_init(struct motor_driver* driver, const char* pwm_dev_name, uin
 	driver->pin1 = pin1;
 	driver->pin2 = pin2;
 	driver->enable_pin = enable_pin;
-	driver->period_ns = 10000;
+	driver->period_ns = 20000;
 
 	driver->pwm = device_get_binding(pwm_dev_name);
 	if (driver->pwm == NULL) {
