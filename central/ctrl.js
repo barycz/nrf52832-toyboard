@@ -15,14 +15,6 @@ class Ctrl {
 		}
 	}
 
-	startBlinking() {
-		this.peripherals.forEach(p => p.startBlinking());
-	}
-
-	turnOn() {
-		this.peripherals.forEach(p => p.turnOn());
-	}
-
 	turnOff() {
 		this.peripherals.forEach(p => p.turnOff());
 	}

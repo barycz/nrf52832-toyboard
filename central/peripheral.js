@@ -13,25 +13,21 @@ class Peripheral {
 	}
 
 	async connect() {
-		try {
-			log('Requesting Bluetooth Device...');
-			this.device = await navigator.bluetooth.requestDevice({
-				filters: [{services: [Peripheral.driverServiceUuid, Peripheral.battServiceName]}]
-			});
+		log('Requesting Bluetooth Device...');
+		this.device = await navigator.bluetooth.requestDevice({
+			filters: [{services: [Peripheral.driverServiceUuid, Peripheral.battServiceName]}]
+		});
 
-			log('Connecting to GATT Server...');
-			this.server = await this.device.gatt.connect();
+		log('Connecting to GATT Server...');
+		this.server = await this.device.gatt.connect();
 
-			log('Getting Services...');
-			await Promise.all([
-				this.initDriver(),
-				this.initBatt(),
-			]);
+		log('Getting Services...');
+		await Promise.all([
+			this.initDriver(),
+			this.initBatt(),
+		]);
 
-			log('Connected.');
-		} catch(error) {
-			log('exception ' + error);
-		}
+		log('Connected.');
 	}
 
 	onBattLevelValueChanged(event) {
