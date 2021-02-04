@@ -10,6 +10,7 @@ class Peripheral {
 			new MotorDriver(MotorDriver.Modes.coast, 0),
 			new MotorDriver(MotorDriver.Modes.coast, 0),
 		];
+		this.battPercentageChanged = new Signal;
 	}
 
 	async connect() {
@@ -34,6 +35,7 @@ class Peripheral {
 		let value = event.target.value;
 		let battPercentage = value.getUint8(0);
 		log('battery percentage ' + battPercentage);
+		this.battPercentageChanged.emit(battPercentage);
 	}
 
 	async initDriver() {

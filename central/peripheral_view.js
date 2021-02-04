@@ -9,29 +9,39 @@ class PeripheralView {
 			peripheral.turnOff();
 		});
 
-		this.addButton("+", function() {
-			peripheral.updateMotorDriver(0, motor => motor.updateDuty(50));
-		});
+		for (let id = 0; id < peripheral.motorDrivers.length; id++) {
+			this.addButton("+", function() {
+				peripheral.updateMotorDriver(id, motor => motor.updateDuty(50));
+			});
 
-		this.addButton("-", function() {
-			peripheral.updateMotorDriver(0, motor => motor.updateDuty(-50));
-		});
+			this.addButton("0", function() {
+				peripheral.updateMotorDriver(id, motor => motor.duty = 0);
+			});
 
-		this.addButton("+", function() {
-			peripheral.updateMotorDriver(1, motor => motor.updateDuty(50));
-		});
+			this.addButton("-", function() {
+				peripheral.updateMotorDriver(id, motor => motor.updateDuty(-50));
+			});
+		}
 
-		this.addButton("-", function() {
-			peripheral.updateMotorDriver(1, motor => motor.updateDuty(-50));
+		let _this = this;
+		this.batt = this.addElement("span");
+		this.peripheral.battPercentageChanged.connect(percentage => {
+			_this.batt.innerText = percentage;
 		});
 
 		this.parent.appendChild(this.topDiv);
 	}
 
 	addButton(text, action) {
-		let btn = document.createElement("button");
-		btn.innerHTML = text;
+		let btn = this.addElement("button");
+		btn.innerText = text;
 		btn.onclick = action;
-		this.topDiv.appendChild(btn);
+		return btn;
+	}
+
+	addElement(type) {
+		let element = document.createElement(type);
+		this.topDiv.appendChild(element);
+		return element;
 	}
 }
