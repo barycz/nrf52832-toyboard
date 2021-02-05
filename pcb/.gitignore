@@ -1,0 +1,6 @@
+*.bak
+*-bak
+*cache.lib
+fp-info-cache
+_export
+fab/*.zip
