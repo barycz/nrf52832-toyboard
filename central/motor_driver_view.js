@@ -11,4 +11,8 @@ class MotorDriverView extends View {
 		this.addButton("-", () => motor.updateDuty(-50));
 		this.addButton("FR", () => motor.fullReverse());
 	}
+
+	get checked() {
+		return this.check.checked;
+	}
 }
