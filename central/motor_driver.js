@@ -8,9 +8,12 @@ class MotorDriver {
 		reverse: 4,
 	});
 
-	constructor(mode, duty) {
+	static FullDuty = 255;
+
+	constructor(mode, duty, peripheral) {
 		this.mode = mode;
 		this.duty = duty;
+		this.peripheral = peripheral;
 	}
 
 	get characteristicData() {
@@ -20,7 +23,30 @@ class MotorDriver {
 		return ret;
 	}
 
-	updateDuty(diff) {
+	async turnOff() {
+		this.mode = MotorDriver.Modes.off;
+		this.duty = 0;
+		return this.peripheral.writeDriverState();
+	}
+
+	async fullForward() {
+		this.mode = MotorDriver.Modes.forward;
+		this.duty = MotorDriver.FullDuty;
+		return this.peripheral.writeDriverState();
+	}
+
+	async fullReverse() {
+		this.mode = MotorDriver.Modes.reverse;
+		this.duty = MotorDriver.FullDuty;
+		return this.peripheral.writeDriverState();
+	}
+
+	async setDuty(duty) {
+		this.duty = duty;
+		return this.peripheral.writeDriverState();
+	}
+
+	async updateDuty(diff) {
 		if (this.mode != MotorDriver.Modes.forward
 			&& this.mode != MotorDriver.Modes.reverse) {
 			this.mode = MotorDriver.Modes.forward;
@@ -38,8 +64,10 @@ class MotorDriver {
 				this.mode = MotorDriver.Modes.forward;
 			}
 		}
-		if (this.duty > 255) {
-			this.duty = 255;
+		if (this.duty > MotorDriver.FullDuty) {
+			this.duty = MotorDriver.FullDuty;
 		}
+
+		return this.peripheral.writeDriverState();
 	}
 }

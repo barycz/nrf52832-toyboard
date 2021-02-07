@@ -1,27 +1,19 @@
 
-class PeripheralView {
+class PeripheralView extends View {
 	constructor(peripheral, parent) {
+		super(parent);
+
 		this.peripheral = peripheral;
-		this.parent = parent;
-		this.topDiv = document.createElement("div");
+		this.motorDriverViews = [];
 
 		this.addButton("off", function() {
 			peripheral.turnOff();
 		});
 
-		for (let id = 0; id < peripheral.motorDrivers.length; id++) {
-			this.addButton("+", function() {
-				peripheral.updateMotorDriver(id, motor => motor.updateDuty(50));
-			});
-
-			this.addButton("0", function() {
-				peripheral.updateMotorDriver(id, motor => motor.duty = 0);
-			});
-
-			this.addButton("-", function() {
-				peripheral.updateMotorDriver(id, motor => motor.updateDuty(-50));
-			});
-		}
+		peripheral.motorDrivers.forEach(motor => {
+			const motorDriverView = new MotorDriverView(motor, this.topDiv);
+			this.motorDriverViews.push(motorDriverView);
+		});
 
 		let _this = this;
 		this.batt = this.addElement("span");
@@ -30,18 +22,5 @@ class PeripheralView {
 		});
 
 		this.parent.appendChild(this.topDiv);
-	}
-
-	addButton(text, action) {
-		let btn = this.addElement("button");
-		btn.innerText = text;
-		btn.onclick = action;
-		return btn;
-	}
-
-	addElement(type) {
-		let element = document.createElement(type);
-		this.topDiv.appendChild(element);
-		return element;
 	}
 }

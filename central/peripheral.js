@@ -7,8 +7,8 @@ class Peripheral {
 
 	constructor() {
 		this.motorDrivers = [
-			new MotorDriver(MotorDriver.Modes.coast, 0),
-			new MotorDriver(MotorDriver.Modes.coast, 0),
+			new MotorDriver(MotorDriver.Modes.coast, 0, this),
+			new MotorDriver(MotorDriver.Modes.coast, 0, this),
 		];
 		this.battPercentageChanged = new Signal;
 	}
@@ -78,8 +78,7 @@ class Peripheral {
 
 	async turnOff() {
 		this.motorDrivers.forEach(driver => {
-			driver.mode = MotorDriver.Modes.off;
-			driver.duty = 0;
+			driver.turnOff();
 		});
 
 		await this.writeDriverState();
