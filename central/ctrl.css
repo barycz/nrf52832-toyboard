@@ -1,0 +1,13 @@
+.PeripheralView {
+	border-left: 0.5vw solid black;
+	padding-left: 0.5em;
+}
+
+.PeripheralView span {
+	margin-left: 0.5em;
+}
+
+.MotorDriverView {
+	display: inline;
+	margin-left: 0.5em;
+}

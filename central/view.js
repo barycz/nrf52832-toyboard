@@ -1,6 +1,9 @@
 class View {
-	constructor(parent) {
+	constructor(props, parent) {
 		this.topDiv = document.createElement("div");
+		for (let p in props) {
+			this.topDiv[p] = props[p];
+		}
 		this.parent = parent;
 		this.parent.appendChild(this.topDiv);
 	}

@@ -1,7 +1,7 @@
 
 class PeripheralView extends View {
 	constructor(peripheral, parent) {
-		super(parent);
+		super({"className":"PeripheralView"}, parent);
 
 		this.peripheral = peripheral;
 		this.motorDriverViews = [];

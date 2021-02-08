@@ -1,6 +1,6 @@
 class MotorDriverView extends View {
 	constructor(motor, parent) {
-		super(parent);
+		super({"className":"MotorDriverView"}, parent);
 
 		this.motor = motor;
 

@@ -34,7 +34,7 @@ class Peripheral {
 	onBattLevelValueChanged(event) {
 		let value = event.target.value;
 		let battPercentage = value.getUint8(0);
-		log('battery percentage ' + battPercentage);
+		//log('battery percentage ' + battPercentage);
 		this.battPercentageChanged.emit(battPercentage);
 	}
 
