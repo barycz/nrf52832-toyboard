@@ -32,12 +32,13 @@ class Ctrl {
 	}
 
 	onKeyDown(e) {
+		const step = e.ctrlKey ? MotorDriver.FullDuty : 20;
 		switch (e.code) {
 			case "ArrowUp":
-				this.forEachChecked(dv => dv.motor.updateDuty(20));
+				this.forEachChecked(dv => dv.motor.updateDuty(step));
 				break;
 			case "ArrowDown":
-				this.forEachChecked(dv => dv.motor.updateDuty(-20));
+				this.forEachChecked(dv => dv.motor.updateDuty(-step));
 				break;
 		}
 	}

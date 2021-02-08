@@ -51,13 +51,18 @@ class MotorDriver {
 			&& this.mode != MotorDriver.Modes.reverse) {
 			this.mode = MotorDriver.Modes.forward;
 		}
+		const oldDuty = this.duty;
 		if (this.mode == MotorDriver.Modes.reverse) {
 			this.duty -= diff;
 		} else {
 			this.duty += diff;
 		}
 		if (this.duty < 0) {
-			this.duty = -this.duty;
+			if (oldDuty == 0) {
+				this.duty = -this.duty;
+			} else {
+				this.duty = 0;
+			}
 			if (this.mode == MotorDriver.Modes.forward) {
 				this.mode = MotorDriver.Modes.reverse;
 			} else {
