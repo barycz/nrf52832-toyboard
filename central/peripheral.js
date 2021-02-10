@@ -1,6 +1,47 @@
 
 log = console.log;
 
+class PeripheralConfig {
+	static RawSize = 20;
+
+	constructor(buffer) {
+		this.rawData = new Uint8Array(buffer);
+	}
+
+	get rawColor() {
+		return this.rawData.subarray(0, 3);
+	}
+
+	get rawName() {
+		return this.rawData.subarray(4);
+	}
+
+	get color() {
+		return '#' + Array.from(this.rawColor).map(
+			c => c.toString(16).padStart(2, '0')
+		).join('');
+	}
+
+	set color(colorStr) {
+		const arr = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(colorStr).map(x => parseInt(x, 16));
+		for (let i = 0; i < this.rawColor.length; i++) {
+			this.rawColor[i] = i + 1 < arr.length ? arr[i + 1] : 0;
+		}
+	}
+
+	get name() {
+		return Array.from(this.rawName.filter(x => x != 0)).map(
+			x => String.fromCharCode(x)
+		).join('');
+	}
+
+	set name(nameStr) {
+		for (let i = 0; i < this.rawName.length; i++) {
+			this.rawName[i] = i < nameStr.length ? nameStr.charCodeAt(i) : 0;
+		}
+	}
+}
+
 class Peripheral {
 	static driverServiceUuid = '00000001-201b-286a-f29d-ff952dc319a2';
 	static battServiceName = 'battery_service';
@@ -11,6 +52,15 @@ class Peripheral {
 			new MotorDriver(MotorDriver.Modes.coast, 0, this),
 		];
 		this.battPercentageChanged = new Signal;
+	}
+
+	async readConfig() {
+		const rawData = await this.confChr.readValue();
+		return new PeripheralConfig(rawData.buffer);
+	}
+
+	async writeConfig(config) {
+		return this.confChr.writeValueWithResponse(config.rawData);
 	}
 
 	async requestDevice() {
@@ -41,10 +91,12 @@ class Peripheral {
 	}
 
 	async initDriver() {
-		const characteristicUuid = '00000002-201b-286a-f29d-ff952dc319a2';
+		const modeCharacteristicUuid = '00000002-201b-286a-f29d-ff952dc319a2';
+		const confCharacteristicUuid = '00000003-201b-286a-f29d-ff952dc319a2';
 
 		this.driverService = await this.server.getPrimaryService(Peripheral.driverServiceUuid);
-		this.driverModeChr = await this.driverService.getCharacteristic(characteristicUuid);
+		this.driverModeChr = await this.driverService.getCharacteristic(modeCharacteristicUuid);
+		this.confChr = await this.driverService.getCharacteristic(confCharacteristicUuid);
 	}
 
 	async initBatt() {
