@@ -1,6 +1,7 @@
 
 #include "battery.h"
 #include "motor_driver.h"
+#include "conf.h"
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -20,6 +21,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
+
+static struct conf conf;
 
 static const struct device *led_blue_dev;
 static const struct device *led_red_dev;
@@ -76,12 +79,45 @@ static const struct bt_uuid_128 vnd_drivers_uuid = BT_UUID_INIT_128(
 	0x6a, 0x28, 0x1b, 0x20, 0x02, 0x00, 0x00, 0x00
 );
 
+static ssize_t read_conf_value(struct bt_conn *conn, const struct bt_gatt_attr *attr,
+	void *buf, uint16_t len, uint16_t offset)
+{
+	const char *value = attr->user_data;
+
+	return bt_gatt_attr_read(conn, attr, buf, len, offset, value, sizeof(conf.user_data));
+}
+
+static ssize_t write_conf_value(struct bt_conn *conn, const struct bt_gatt_attr *attr,
+	const void *buf, uint16_t len, uint16_t offset, uint8_t flags)
+{
+	uint8_t *value = attr->user_data;
+
+	if (offset + len > sizeof(conf.user_data)) {
+		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+	}
+
+	memcpy(value + offset, buf, len);
+	conf_write(&conf);
+
+	return len;
+}
+
+// 00000003-201b-286a-f29d-ff952dc319a2
+static const struct bt_uuid_128 vnd_conf_uuid = BT_UUID_INIT_128(
+	0xa2, 0x19, 0xc3, 0x2d, 0x95, 0xff, 0x9d, 0xf2,
+	0x6a, 0x28, 0x1b, 0x20, 0x03, 0x00, 0x00, 0x00
+);
+
 BT_GATT_SERVICE_DEFINE(vnd_svc,
 	BT_GATT_PRIMARY_SERVICE(&vnd_uuid),
 	BT_GATT_CHARACTERISTIC(&vnd_drivers_uuid.uuid,
 		BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
 		BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
 		read_driver_value, write_driver_value, &driver_value),
+	BT_GATT_CHARACTERISTIC(&vnd_conf_uuid.uuid,
+		BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,
+		BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
+		read_conf_value, write_conf_value, &conf.user_data),
 );
 
 static const struct bt_data ad[] = {
@@ -161,6 +197,17 @@ void main(void)
 	err = motor_driver_init(&motor_b, PWM0, MOTOR_PIN_B1, MOTOR_PIN_B2, LED_BLUE, MOTOR_PIN_NSLEEP); // TODO right device
 	if (err < 0) {
 		return;
+	}
+
+	err = conf_init();
+	if (err) {
+		printk("conf_init failed (err %d)\n", err);
+		return;
+	}
+
+	err = conf_read(&conf);
+	if (err < 0) {
+		conf_get_default(&conf);
 	}
 
 	err = bt_enable(bt_ready);
