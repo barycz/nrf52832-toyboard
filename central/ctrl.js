@@ -10,6 +10,7 @@ class Ctrl {
 	async addPeripheral() {
 		try {
 			let p = new Peripheral();
+			await p.requestDevice();
 			await p.connect();
 			let v = new PeripheralView(p, document.getElementById("peripherals"));
 			this.peripherals.push(p);

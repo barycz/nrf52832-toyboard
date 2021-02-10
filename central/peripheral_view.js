@@ -20,7 +20,5 @@ class PeripheralView extends View {
 		this.peripheral.battPercentageChanged.connect(percentage => {
 			_this.batt.innerText = percentage;
 		});
-
-		this.parent.appendChild(this.topDiv);
 	}
 }

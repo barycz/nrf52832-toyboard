@@ -13,12 +13,14 @@ class Peripheral {
 		this.battPercentageChanged = new Signal;
 	}
 
-	async connect() {
+	async requestDevice() {
 		log('Requesting Bluetooth Device...');
 		this.device = await navigator.bluetooth.requestDevice({
 			filters: [{services: [Peripheral.driverServiceUuid, Peripheral.battServiceName]}]
 		});
+	}
 
+	async connect() {
 		log('Connecting to GATT Server...');
 		this.server = await this.device.gatt.connect();
 
